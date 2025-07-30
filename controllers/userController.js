@@ -1,7 +1,7 @@
 import { catchAsyncErrors } from "../middlewares/catchAsyncError.js";
 import { User } from "../models/userSchema.js";
 import ErrorHandler from "../middlewares/error.js";
-import { sendToken } from "../utils/jwtToken.js";
+import jwt from "jsonwebtoken"; // ✅ Needed for token generation
 
 export const register = catchAsyncErrors(async (req, res, next) => {
   const { name, email, phone, password, role } = req.body;
@@ -19,7 +19,23 @@ export const register = catchAsyncErrors(async (req, res, next) => {
     password,
     role,
   });
-  sendToken(user, 201, res, "User Registered Sucessfully !");
+
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "User Registered Successfully!",
+    user,
+  });
 });
 
 export const login = catchAsyncErrors(async (req, res, next) => {
@@ -40,7 +56,24 @@ export const login = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler(`User with provided email and ${role} not found !`, 404)
     );
   }
-  sendToken(user, 201, res, "User Logged In Sucessfully !");
+
+  // ✅ Create and send token with cookie
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "User Logged In Successfully!",
+    user,
+  });
 });
 
 export const logout = catchAsyncErrors(async (req, res, next) => {
@@ -55,7 +88,6 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
       message: "Logged Out Successfully !",
     });
 });
-
 
 export const getUser = catchAsyncErrors((req, res, next) => {
   const user = req.user;
