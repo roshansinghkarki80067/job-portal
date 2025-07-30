@@ -14,8 +14,8 @@ config({ path: "./config/config.env" });
 
 app.use(
   cors({
-    origin: "https://your-netlify-site.netlify.app",
-    method: ["GET", "POST", "DELETE", "PUT"],
+    origin: "https://preeminent-shortbread-f6a9fc.netlify.app",
+    methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })
 );
